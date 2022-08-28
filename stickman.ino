@@ -1,8 +1,9 @@
-// Stickman
-#include <TFT_eSPI.h> 
+// missile command game
+
+#include <TFT_eSPI.h> // Hardware-specific library
 #include <SPI.h>
 
-TFT_eSPI tft = TFT_eSPI();      
+TFT_eSPI tft = TFT_eSPI();       // Invoke custom library
 
 #define BLACK 0x0000
 #define BLUE 0x001F
@@ -94,51 +95,22 @@ void add_torso(void) {
     bones.push_back ( {hip,neck} );
 }
 
-void draw_head(void) {
+void draw_head(Vec2 pos) {
     Vec2 head;
-    head = vecadd(center, neck);
+    head = vecadd(pos, neck);
     head.y -= size  /2;
-    tft.drawCircle(head.x, head.y, size  / 2, WHITE);
+    tft.drawCircle(head.x, head.y, size  / 2, color);
 }
 
 void drawground ( void) {
     for(int dust=0; dust < SCREENWIDTH + 200; dust += 40) 
-      tft.drawPixel (dustx + dust,SCREENHEIGHT,GREEN); 
+      tft.drawPixel (dustx + dust,SCREENHEIGHT,color); 
 }
 
-void read_buttons( void ) {
-  if (digitalRead(button1) == LOW) size++;
-  if (digitalRead(button2) == LOW) size--;
-}
-void setup()
-{
-  // Setup the LCD
-  tft.init();
-  tft.setRotation(1);
-  tft.fillScreen(BLACK);
-
-  pinMode(button1, INPUT);
-  speed = 400;
-  center = { SCREENWIDTH /2, SCREENHEIGHT /2 };
-}
-
-void loop()
-{
+void draw_stickman( Vec2 pos) {
   float left  = 0;
   float right = 3.142;
   
-    tft.fillScreen(TFT_BLACK);
-    read_buttons();
-    // draw moving dust on ground
-    count += speed / 2000.0f;
-
-    dustx -= speed / 50.0f;
-    if (dustx < -160) dustx = 0;
-    
-    drawground();
-
-    // draw stickman
-    color = WHITE;
     bones.clear();
 
     add_leg(left);
@@ -150,11 +122,44 @@ void loop()
     add_arm(right);
 
     for (auto bone:bones) {
-      Vec2 line = vecadd(bone.joint1, center);
-      Vec2 line2 = vecadd(bone.joint2, center);
-      tft.drawLine(line.x, line.y, line2.x, line2.y, WHITE);
+      Vec2 line = vecadd(bone.joint1, pos);
+      Vec2 line2 = vecadd(bone.joint2, pos);
+      tft.drawLine(line.x, line.y, line2.x, line2.y, color);
     }
-    draw_head();
+    draw_head(pos);
+}
+void read_buttons( void ) {
+  if (digitalRead(button1) == LOW) size++;
+  if (digitalRead(button2) == LOW) size--;
+}
+void setup()
+{
+  // Setup the LCD
+  tft.init();
+  tft.setRotation(1);
+  tft.fillScreen(BLACK);
 
-delay(50);
+  pinMode(button1, INPUT); 
+  center = { SCREENWIDTH /2, SCREENHEIGHT /2 };
+}
+
+void loop()
+{
+    tft.fillScreen(TFT_BLACK);
+    count += 0.3;
+    color = WHITE;
+    
+    read_buttons();
+ 
+    // draw moving dust on ground
+    dustx -= 4;
+    if (dustx < -160) dustx = 0;
+    drawground();
+
+    // draw stickman
+    Vec2 pos = center;
+    pos.y = SCREENHEIGHT - size * 2;
+    draw_stickman(pos);
+
+    delay(50);
 }
